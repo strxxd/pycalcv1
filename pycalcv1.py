@@ -100,13 +100,13 @@ class PyCalcv1:
             try:
                 # Determine whether unary or binary
                 if op_symbol in self.unary_ops:
-                    # Unary Operations only use one number
+                    # Unary operations only use one number
                     print(f"Selected '{op_symbol}'. No second number needed.")
                     calc_function = self.unary_ops[op_symbol]
                     result = calc_function(num1)
                 
                 elif op_symbol in self.binary_ops:
-                    # Binary Operatiosns require second number
+                    # Binary operations require a second number
                     num2 = self._get_valid_number("Enter the second number: ")
                     calc_function = self.binary_ops[op_symbol]
                     result = calc_function(num1, num2)
