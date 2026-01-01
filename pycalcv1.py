@@ -28,16 +28,23 @@ class PyCalcv1:
             "tan": self._tangent,
         }
         
+        #Constants
+        self.constants = {
+            "pi": math.pi,
+            "e": math.e,
+            "tau": math.tau
+        }
+
         # Combine keys for display purposes
         self.all_ops = {**self.binary_ops, **self.unary_ops}
 
     def _get_valid_number(self, prompt):
         """Prompts user for a number until valid input is received.
-        , also handles 'ans' input."""
+        , also handles 'ans' / 'constant' input."""
         while True:
             user_input = input(prompt).strip().lower()
 
-            # Check for 'ans' input
+            # Check for 'ans'
             if user_input == "ans":
                 if self.last_result is not None:
                     print(f"Last result: {self.last_result}")
@@ -45,12 +52,18 @@ class PyCalcv1:
                 else:
                     print("No previous result available yet.")
                     continue
-            
+
+            # Check for constants
+            if user_input in self.constants:
+                val = self.constants[user_input]
+                print(f"Constant '{user_input}': {val}")
+                return val
+
             # Check for standard input
             try:
                 return float(user_input)
             except ValueError:
-                print("Error. Invalid input.")
+                print("Error. Invalid input (must be a number, constant, or 'ans').")
 
     def _display_history(self):
         """Prints calculation history."""
