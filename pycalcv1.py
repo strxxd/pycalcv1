@@ -28,7 +28,7 @@ class PyCalcv1:
             "tan": self._tangent,
         }
         
-        #Constants
+        # Constants
         self.constants = {
             "pi": math.pi,
             "e": math.e,
