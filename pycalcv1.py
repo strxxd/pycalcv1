@@ -26,6 +26,7 @@ class PyCalcv1:
             "sin": (lambda a: math.sin(math.radians(a))),
             "cos": (lambda a: math.cos(math.radians(a))),
             "tan": self._tangent,
+            "!": self._factorial,
         }
         
         # Constants
@@ -52,6 +53,11 @@ class PyCalcv1:
                 else:
                     print("No previous result available yet.")
                     continue
+
+            # Memory function
+            if user_input == "mem":
+                print(f"Memory Recall: {self.memory_val}")
+                return self.memory_val
 
             # Check for constants
             if user_input in self.constants:
@@ -113,6 +119,13 @@ class PyCalcv1:
             raise ValueError("Tangent is undefined for 90, 270, etc.")
         return math.tan(math.radians(n1))
 
+    def _factorial(self, n1):
+        if n1 < 0:
+            raise ValueError("Factorial is not defined for negative numbers.")
+        if not float(n1).is_integer():
+            raise ValueError("Factorial is only defined for integers.")
+        return math.factorial(int(n1))
+
     # Primary execution
     def run(self):
         print("Launching The Python Calculator... launched!")
@@ -128,12 +141,25 @@ class PyCalcv1:
             ans_prompt = "(Type 'ans' to see last result)" if self.last_result is not None else ""
             num1 = self._get_valid_number(f"\nEnter the first number {ans_prompt}: ")
 
-            print("Available operations:", " | ".join(self.all_ops.keys()), "| hist (View History)")
+            print("Available operations:", " | ".join(self.all_ops.keys()), "| hist | m+ | mc")
             op_symbol = input("Pick an operation (or 'hist'): ").lower().strip()
 
             if op_symbol == "hist": # Checks for history cmd
                 self._display_history()
                 continue # Restarts loop
+
+            if op_symbol == "m+":
+                if self.last_result is not None:
+                    self.memory_val += self.last_result
+                    print(f"Added {self.last_result} to memory. (New Memory: {self.memory_val})")
+                else:
+                    print("No result to add to memory yet.")
+                continue # Skip rest of loop
+
+            elif op_symbol == "mc":
+                self.memory_val = 0.0
+                print("Memory Cleared.")
+                continue
 
             if op_symbol not in self.all_ops:
                 print("Invalid operator. Please try again.")
