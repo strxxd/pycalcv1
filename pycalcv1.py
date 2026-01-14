@@ -65,6 +65,7 @@ class PyCalcv1:
                     print("No previous result available yet.")
                     continue
 
+            # Check for 'help'
             if user_input == "help":
                 print("Commands: stats, mode, mem, ans, hist")
                 continue 
