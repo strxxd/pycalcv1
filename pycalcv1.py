@@ -7,7 +7,8 @@ class PyCalcv1:
         self.memory_val = 0.0
         self.running = True
         self.last_result = None # Stores last result
-
+        self.angle_mode = "degrees"
+        
         # Binary operations
         self.binary_ops = {
             "+": (lambda a, b: a + b),
@@ -23,9 +24,12 @@ class PyCalcv1:
         self.unary_ops = {
             "sqrt": self._sqrt,
             "log": self._log_base10,
-            "sin": (lambda a: math.sin(math.radians(a))),
-            "cos": (lambda a: math.cos(math.radians(a))),
             "tan": self._tangent,
+            "sin": lambda a: math.sin(self._to_rad(a)),
+            "cos": lambda a: math.cos(self._to_rad(a)),
+            "asin": lambda a: self._from_rad(math.asin(a)),
+            "acos": lambda a: self._from_rad(math.acos(a)),
+            "atan": lambda a: self._from_rad(math.atan(a)),
             "!": self._factorial,
         }
         
@@ -40,10 +44,16 @@ class PyCalcv1:
         self.all_ops = {**self.binary_ops, **self.unary_ops}
 
     def _get_valid_number(self, prompt):
-        """Prompts user for a number until valid input is received.
-        , also handles 'ans' / 'constant' input."""
+        """Prompts user for a number until valid input is received."""
         while True:
             user_input = input(prompt).strip().lower()
+
+            # Check for 'stats'
+            if user_input == "stats":
+                return "stats"
+            
+            if user_input == "mode":
+                return "mode"
 
             # Check for 'ans'
             if user_input == "ans":
@@ -53,6 +63,10 @@ class PyCalcv1:
                 else:
                     print("No previous result available yet.")
                     continue
+
+            if user_input == "help":
+                print("Commands: stats, mode, mem, ans, hist")
+                continue 
 
             # Memory function
             if user_input == "mem":
@@ -82,6 +96,22 @@ class PyCalcv1:
             print(f"[{i + 1}]: {entry}") 
         print("---------------------------\n")
 
+    def _to_rad(self, n):
+        """Converts input to radians if mode is degrees."""
+        return math.radians(n) if self.angle_mode == "degrees" else n
+
+    def _from_rad(self, n):
+        """Converts result back to degrees if mode is degrees."""
+        return math.degrees(n) if self.angle_mode == "degrees" else n
+
+    def _toggle_mode(self):
+        """Switches between Degrees and Radians."""
+        if self.angle_mode == "degrees":
+            self.angle_mode = "radians"
+        else:
+            self.angle_mode = "degrees"
+        print(f"Angle mode switched to: {self.angle_mode.upper()}")
+    
     # Binary
     def _divide(self, n1, n2):
         if n2 == 0:
@@ -115,9 +145,13 @@ class PyCalcv1:
         return math.log10(n1)
 
     def _tangent(self, n1):
-        if abs((n1 % 180) - 90) < 1e-9:
-            raise ValueError("Tangent is undefined for 90, 270, etc.")
-        return math.tan(math.radians(n1))
+        # Asymptotes (90, 270) in degrees
+        check_angle = n1 if self.angle_mode == "degrees" else math.degrees(n1)
+    
+        if abs((check_angle % 180) - 90) < 1e-9:
+            raise ValueError("Tangent undefined at 90, 270...")
+         
+        return math.tan(self._to_rad(n1))
 
     def _factorial(self, n1):
         if n1 < 0:
@@ -126,6 +160,25 @@ class PyCalcv1:
             raise ValueError("Factorial is only defined for integers.")
         return math.factorial(int(n1))
 
+    def _run_stats(self):
+        print("\n--- Statistics Mode ---")
+        raw = input("Enter numbers separated by commas (e.g. 1, 2, 5, 10): ")
+        try:
+            # Conversion 1, 2 ,3 / 1.0, 2.0, 3.0
+            nums = [float(x.strip()) for x in raw.split(",")]
+            if not nums: return
+            
+            mean_val = sum(nums) / len(nums)
+            print(f"  > Mean (Average): {mean_val}")
+            print(f"  > Max: {max(nums)}")
+            print(f"  > Min: {min(nums)}")
+            
+            # Save history
+            self.last_result = mean_val
+            self.history.append(f"Stats Mean of {nums} = {mean_val}")
+        except ValueError:
+            print("Error: Please enter valid numbers separated by commas.")
+
     # Primary execution
     def run(self):
         print("Launching The Python Calculator... launched!")
@@ -133,14 +186,24 @@ class PyCalcv1:
         print("//-The Python Calculator-v1-//")
         print("-----------------------------------------------")
         print("(Trigonometry functions expect input in degrees)")
-        print("(Type ans for last result)")
+        print("(Type 'mode' to switch to radians)")
         print("===============================================")
 
         while self.running:
             # Check if 'ans' is available, prompt if so
             ans_prompt = "(Type 'ans' to see last result)" if self.last_result is not None else ""
-            num1 = self._get_valid_number(f"\nEnter the first number {ans_prompt}: ")
+            
+            mode_tag = "[DEG]" if self.angle_mode == "degrees" else "[RAD]"
+            num1 = self._get_valid_number(f"\n{mode_tag} Enter first number {ans_prompt}: ")
 
+            if num1 == "stats":
+                self._run_stats()
+                continue
+
+            if num1 == "mode":
+                self._toggle_mode()
+                continue
+            
             print("Available operations:", " | ".join(self.all_ops.keys()), "| hist | m+ | mc")
             op_symbol = input("Pick an operation (or 'hist'): ").lower().strip()
 
@@ -180,6 +243,9 @@ class PyCalcv1:
                 elif op_symbol in self.binary_ops:
                     ans_prompt = "(Type 'ans' to use the last result)" if self.last_result is not None else ""
                     num2 = self._get_valid_number(f"Enter the second number {ans_prompt}: ") 
+                    if isinstance(num2, str):
+                        print(f"Cannot run command '{num2}' mid-calculation. Restarting...")
+                        continue
                     calc_function = self.binary_ops[op_symbol]
                     result = calc_function(num1, num2)
                     calculation_str = f"{num1} {op_symbol} {num2}"
