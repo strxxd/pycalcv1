@@ -51,7 +51,8 @@ class PyCalcv1:
             # Check for 'stats'
             if user_input == "stats":
                 return "stats"
-            
+
+            # Check for 'mode'
             if user_input == "mode":
                 return "mode"
 
